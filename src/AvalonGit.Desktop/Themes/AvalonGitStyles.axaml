@@ -24,11 +24,11 @@
     </Style>
     
     <Style Selector="Button.titleBarButton:pointerover /template/ ContentPresenter">
-        <Setter Property="Background" Value="#33FFFFFF"/>
+        <Setter Property="Background" Value="#333B82F6"/>
     </Style>
     
     <Style Selector="Button.titleBarButton:pressed /template/ ContentPresenter">
-        <Setter Property="Background" Value="#22FFFFFF"/>
+        <Setter Property="Background" Value="#443B82F6"/>
     </Style>
 
     <!-- Close Button Hover -->
@@ -40,6 +40,21 @@
     <Style Selector="Path.windowIcon">
         <Setter Property="Stroke" Value="{DynamicResource TextPrimaryBrush}"/>
         <Setter Property="StrokeThickness" Value="1"/>
+    </Style>
+
+    <!-- Link Button Style -->
+    <Style Selector="Button.linkButton">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="Cursor" Value="Hand"/>
+    </Style>
+    
+    <Style Selector="Button.linkButton:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
     </Style>
 
 </Styles>
