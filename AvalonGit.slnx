@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/AvalonGit.Core/AvalonGit.Core.csproj" />
+    <Project Path="src/AvalonGit.Desktop/AvalonGit.Desktop.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/AvalonGit.Tests/AvalonGit.Tests.csproj" />
+  </Folder>
+</Solution>
