@@ -1,0 +1,27 @@
+# Default
+* text=auto
+
+# C# files
+*.cs text eol=lf
+*.csx text eol=lf
+
+# XAML files
+*.axaml text eol=lf
+
+# Project files
+*.csproj text eol=lf
+*.sln text eol=lf
+
+# Binary files
+*.dll binary
+*.pdb binary
+*.exe binary
+
+# Images
+*.png binary
+*.ico binary
+*.jpg binary
+*.jpeg binary
+
+# NuGet
+*.nupkg binary

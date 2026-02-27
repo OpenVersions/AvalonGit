@@ -3,18 +3,161 @@
         xmlns:vm="using:AvalonGit.Desktop.ViewModels"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
         x:Class="AvalonGit.Desktop.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
-        Icon="/Assets/avalonia-logo.ico"
-        Title="AvalonGit.Desktop">
+        Title=""
+        Width="1200" Height="800"
+        MinWidth="800" MinHeight="600"
+        Background="Transparent"
+        TransparencyLevelHint="Transparent"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaTitleBarHeightHint="0"
+        ExtendClientAreaChromeHints="NoChrome"
+        SystemDecorations="BorderOnly"
+        CanResize="True"
+        PointerPressed="Window_PointerPressed">
 
-    <Design.DataContext>
-        <!-- This only sets the DataContext for the previewer in an IDE,
-             to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
-        <vm:MainWindowViewModel/>
-    </Design.DataContext>
+    <Window.Styles>
+        <!-- MenuFlyoutPresenter Style -->
+        <Style Selector="MenuFlyoutPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="4"/>
+            <Setter Property="Margin" Value="8,4,0,0"/>
+        </Style>
+        
+        <!-- MenuItem Hover Style -->
+        <Style Selector="MenuItem:pointerover /template/ Border">
+            <Setter Property="Background">
+                <Setter.Value>
+                    <SolidColorBrush Color="#FFFFFFFF" Opacity="0.08"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        
+        <!-- Separator Style -->
+        <Style Selector="Separator">
+            <Setter Property="Background" Value="#FFFFFFFF"/>
+            <Setter Property="Opacity" Value="0.1"/>
+            <Setter Property="Margin" Value="8,4"/>
+        </Style>
+        <Style Selector="Path#MaximizeIcon">
+            <Setter Property="Data" Value="{StaticResource IconMaximize}"/>
+        </Style>
+        <Style Selector="Window[WindowState=Normal] Border#MainAppFrame">
+            <Setter Property="CornerRadius" Value="12"/>
+        </Style>
+        <Style Selector="Window[WindowState=Maximized] Border#MainAppFrame">
+            <Setter Property="CornerRadius" Value="0"/>
+        </Style>
+        <Style Selector="Window[WindowState=Maximized] Path#MaximizeIcon">
+            <Setter Property="Data" Value="{StaticResource IconRestore}"/>
+        </Style>
+    </Window.Styles>
 
-    <TextBlock Text="{Binding Greeting}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+    <Border x:Name="MainAppFrame"
+            Background="{DynamicResource BackgroundBrush}"
+            ClipToBounds="True">
+        <DockPanel>
+            <!-- Top Bar: Menu + Window Buttons -->
+            <Border DockPanel.Dock="Top" 
+                    Background="{DynamicResource SurfaceBrush}">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                    <!-- Hamburger Menu -->
+                    <Button Grid.Column="0" Classes="titleBarButton" ToolTip.Tip="Menu">
+                        <Button.Flyout>
+                            <MenuFlyout Placement="BottomEdgeAlignedLeft">
+                                <MenuItem Header="Abrir Repositório" Command="{Binding OpenRepositoryCommand}">
+                                    <MenuItem.Icon>
+                                        <PathIcon Data="{StaticResource IconFolder}" Foreground="{DynamicResource TextPrimaryBrush}" Width="28" Height="28" Margin="0,0,10,0"/>
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem Header="Clonar Repositório" Command="{Binding CloneRepositoryCommand}">
+                                    <MenuItem.Icon>
+                                        <PathIcon Data="{StaticResource IconClone}" Foreground="{DynamicResource TextPrimaryBrush}" Width="28" Height="28" Margin="0,0,10,0"/>
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem Header="Novo Repositório">
+                                    <MenuItem.Icon>
+                                        <PathIcon Data="{StaticResource IconAdd}" Foreground="{DynamicResource TextPrimaryBrush}" Width="28" Height="28" Margin="0,0,10,0"/>
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <Separator/>
+                                <MenuItem Header="Preferências">
+                                    <MenuItem.Icon>
+                                        <PathIcon Data="{StaticResource IconSettings}" Foreground="{DynamicResource TextPrimaryBrush}" Width="28" Height="28" Margin="0,0,10,0"/>
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem Header="Atalhos de Teclado">
+                                    <MenuItem.Icon>
+                                        <PathIcon Data="{StaticResource IconKeyboard}" Foreground="{DynamicResource TextPrimaryBrush}" Width="28" Height="28" Margin="0,0,10,0"/>
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <Separator/>
+                                <MenuItem Header="Verificar Atualizações">
+                                    <MenuItem.Icon>
+                                        <PathIcon Data="{StaticResource IconUpdate}" Foreground="{DynamicResource TextPrimaryBrush}" Width="28" Height="28" Margin="0,0,10,0"/>
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem Header="Sobre" Click="OpenAboutWindow">
+                                    <MenuItem.Icon>
+                                        <PathIcon Data="{StaticResource IconInfo}" Foreground="{DynamicResource TextPrimaryBrush}" Width="28" Height="28" Margin="0,0,10,0"/>
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <Separator/>
+                                <MenuItem Header="Sair" Click="CloseWindow">
+                                    <MenuItem.Icon>
+                                        <PathIcon Data="{StaticResource IconExit}" Foreground="{DynamicResource TextPrimaryBrush}" Width="28" Height="28" Margin="0,0,10,0"/>
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                            </MenuFlyout>
+                        </Button.Flyout>
+                        <Viewbox Width="16" Height="16" Stretch="Uniform">
+                            <Path Data="{StaticResource IconHamburger}"
+                                  Fill="{DynamicResource TextPrimaryBrush}"
+                                  Classes="windowIcon"/>
+                        </Viewbox>
+                    </Button>
+                    
+                    <!-- Window Buttons -->
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="0">
+                        <Button Classes="titleBarButton"
+                                Click="MinimizeWindow"
+                                ToolTip.Tip="Minimizar">
+                            <Viewbox Width="12" Height="12" Stretch="Uniform">
+                                <Path Data="{StaticResource IconMinimize}" Classes="windowIcon"/>
+                            </Viewbox>
+                        </Button>
+                        <Button Classes="titleBarButton"
+                                Click="MaximizeWindow"
+                                ToolTip.Tip="Maximizar"
+                                x:Name="MaximizeButton">
+                            <Viewbox Width="12" Height="12" Stretch="Uniform">
+                                <Path Classes="windowIcon"
+                                      x:Name="MaximizeIcon"/>
+                            </Viewbox>
+                        </Button>
+                        <Button Classes="titleBarButton closeButton"
+                                Click="CloseWindow"
+                                ToolTip.Tip="Fechar">
+                            <Viewbox Width="12" Height="12" Stretch="Uniform">
+                                <Path Data="{StaticResource IconClose}" Classes="windowIcon"/>
+                            </Viewbox>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Main Content -->
+            <Border Background="{DynamicResource BackgroundBrush}">
+                <TextBlock Text="{Binding Greeting}" 
+                           Foreground="{DynamicResource TextPrimaryBrush}"
+                           HorizontalAlignment="Center" 
+                           VerticalAlignment="Center"/>
+            </Border>
+        </DockPanel>
+    </Border>
 
 </Window>
