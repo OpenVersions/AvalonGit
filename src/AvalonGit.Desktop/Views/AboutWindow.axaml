@@ -1,0 +1,123 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:AvalonGit.Desktop.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="240"
+        x:Class="AvalonGit.Desktop.Views.AboutWindow"
+        x:DataType="vm:AboutViewModel"
+        Title="Sobre"
+        Width="500" Height="240"
+        WindowStartupLocation="CenterOwner"
+        Background="Transparent"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaTitleBarHeightHint="0"
+        ExtendClientAreaChromeHints="NoChrome"
+        SystemDecorations="BorderOnly"
+        CanResize="False"
+        ShowInTaskbar="False">
+
+    <Border Background="{DynamicResource SurfaceBrush}"
+            CornerRadius="8"
+            ClipToBounds="True"
+            Padding="24">
+        <DockPanel>
+            <!-- Title Bar -->
+            <Border DockPanel.Dock="Top"
+                    Margin="-24,-24,-24,16"
+                    Background="{DynamicResource SurfaceBrush}"
+                    Height="32">
+                <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Grid.Column="0"
+                                Orientation="Horizontal"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center">
+                        <TextBlock Text="Sobre"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                   FontWeight="SemiBold" />
+                    </StackPanel>
+
+                    <Button Grid.Column="1"
+                            Classes="titleBarButton"
+                            Click="CloseWindow"
+                            ToolTip.Tip="Fechar">
+                        <Viewbox Width="12" Height="12" Stretch="Uniform">
+                            <Path Data="{StaticResource IconClose}" Classes="windowIcon" />
+                        </Viewbox>
+                    </Button>
+                </Grid>
+            </Border>
+
+            <!-- Content -->
+            <Grid ColumnDefinitions="Auto,*">
+                <!-- Icon Column -->
+                <Viewbox Grid.Column="0"
+                         Width="88"
+                         Height="88"
+                         VerticalAlignment="Center"
+                         Margin="0,0,24,0">
+                    <Border Width="88" Height="88"
+                            CornerRadius="12"
+                            Background="{DynamicResource BackgroundBrush}">
+                        <Viewbox Width="56" Height="56">
+                            <Path
+                                Data="M12,0A12,12 0 0,0 0,12A12,12 0 0,0 12,24A12,12 0 0,0 24,12A12,12 0 0,0 12,0M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M11,7.5V12L15.5,14.5L16.5,12.5L13,10.5V7.5H11M12,16A2,2 0 0,1 14,18A2,2 0 0,1 12,20A2,2 0 0,1 10,18A2,2 0 0,1 12,16Z"
+                                Fill="{DynamicResource AccentBrush}"
+                                Stretch="Uniform" />
+                        </Viewbox>
+                    </Border>
+                </Viewbox>
+
+                <!-- Info Column -->
+                <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                    <!-- Title + Version Badge -->
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="AvalonGit"
+                                   FontSize="30"
+                                   FontWeight="Bold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                        <Border Background="{DynamicResource AccentBrush}"
+                                CornerRadius="4"
+                                Padding="8,2"
+                                VerticalAlignment="Center">
+                            <TextBlock Text="{Binding Version}"
+                                       FontSize="12"
+                                       Foreground="{DynamicResource BackgroundBrush}"
+                                       FontWeight="SemiBold" />
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Description -->
+                    <TextBlock
+                        Text="AvalonGit é um cliente Git multiplataforma, focado em performance e simplicidade, desenvolvido com C# e Avalonia UI"
+                        FontSize="13"
+                        Foreground="{DynamicResource TextSecondaryBrush}"
+                        TextWrapping="Wrap"
+                        Margin="0,8,0,0"
+                        MaxWidth="340" />
+
+                    <!-- Links -->
+                    <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,12,0,0">
+                        <Button Classes="linkButton" Click="OpenGitHub" Padding="8"
+                                ToolTip.Tip="{DynamicResource ProjectUrl}">
+                            <Viewbox Width="20" Height="20">
+                                <Path Data="{StaticResource GithubIcon}"
+                                      Fill="{DynamicResource TextPrimaryBrush}"
+                                      Stretch="Uniform" />
+                            </Viewbox>
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Footer -->
+                <TextBlock Grid.Column="1"
+                           Text="Copyright © 2026 OpenVersions"
+                           FontSize="11"
+                           Foreground="{DynamicResource TextSecondaryBrush}"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Bottom" />
+            </Grid>
+        </DockPanel>
+    </Border>
+
+</Window>
