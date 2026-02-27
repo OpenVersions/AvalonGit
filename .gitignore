@@ -31,3 +31,15 @@ bld/
 
 # Avalonia
 artifacts/
+
+# Rider / IntelliJ
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# VS Code
+.vscode/
+
+# DotSettings
+*.DotSettings.user
