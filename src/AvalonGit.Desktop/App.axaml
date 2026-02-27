@@ -2,8 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="AvalonGit.Desktop.App"
              xmlns:local="using:AvalonGit.Desktop"
-             RequestedThemeVariant="Default">
-             <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
+             RequestedThemeVariant="Dark">
 
     <Application.DataTemplates>
         <local:ViewLocator/>
@@ -11,5 +10,20 @@
   
     <Application.Styles>
         <FluentTheme />
+        <StyleInclude Source="avares://AvalonGit.Desktop/Themes/AvalonGitStyles.axaml" />
     </Application.Styles>
+
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="avares://AvalonGit.Desktop/Themes/AvalonGitTheme.axaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- Window Control Icons -->
+            <StreamGeometry x:Key="IconMinimize">M2,12H22</StreamGeometry>
+            <StreamGeometry x:Key="IconMaximize">M2,2H20V20H2V2M4,4V18H18V4H4</StreamGeometry>
+            <StreamGeometry x:Key="IconRestore">M4,4H16V16H4V4M6,6V14H14V6H6M2,2V20H20V2H2</StreamGeometry>
+            <StreamGeometry x:Key="IconClose">M2,2L22,22M22,2L2,22</StreamGeometry>
+        </ResourceDictionary>
+    </Application.Resources>
 </Application>
