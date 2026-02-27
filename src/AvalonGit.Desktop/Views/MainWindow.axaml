@@ -3,18 +3,82 @@
         xmlns:vm="using:AvalonGit.Desktop.ViewModels"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
         x:Class="AvalonGit.Desktop.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
-        Icon="/Assets/avalonia-logo.ico"
-        Title="AvalonGit.Desktop">
+        Title=""
+        Width="1200" Height="800"
+        MinWidth="800" MinHeight="600"
+        Background="Transparent"
+        TransparencyLevelHint="Transparent"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaTitleBarHeightHint="0"
+        ExtendClientAreaChromeHints="NoChrome"
+        SystemDecorations="BorderOnly"
+        CanResize="True"
+        PointerPressed="Window_PointerPressed">
 
-    <Design.DataContext>
-        <!-- This only sets the DataContext for the previewer in an IDE,
-             to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
-        <vm:MainWindowViewModel/>
-    </Design.DataContext>
+    <Window.Styles>
+        <Style Selector="Window[WindowState=Normal] Border#MainAppFrame">
+            <Setter Property="CornerRadius" Value="12"/>
+        </Style>
+        <Style Selector="Window[WindowState=Maximized] Border#MainAppFrame">
+            <Setter Property="CornerRadius" Value="0"/>
+        </Style>
+    </Window.Styles>
 
-    <TextBlock Text="{Binding Greeting}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+    <Border x:Name="MainAppFrame"
+            Background="{DynamicResource BackgroundBrush}"
+            ClipToBounds="True">
+        <DockPanel>
+            <!-- Top Bar: Menu + Window Buttons -->
+            <Border DockPanel.Dock="Top" 
+                    Background="{DynamicResource SurfaceBrush}">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                    <!-- Menu Items -->
+                    <StackPanel Grid.Column="0" Orientation="Horizontal">
+                        <Button Classes="menuButton" Content="_Arquivo" />
+                        <Button Classes="menuButton" Content="_Editar" />
+                        <Button Classes="menuButton" Content="_Repositório" />
+                        <Button Classes="menuButton" Content="_Preferências" />
+                        <Button Classes="menuButton" Content="_Ajuda" />
+                    </StackPanel>
+                    
+                    <!-- Window Buttons -->
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="0">
+                        <Button Classes="titleBarButton"
+                                Click="MinimizeWindow"
+                                ToolTip.Tip="Minimizar">
+                            <Viewbox Width="12" Height="12">
+                                <Path Data="{StaticResource IconMinimize}" Classes="windowIcon"/>
+                            </Viewbox>
+                        </Button>
+                        <Button Classes="titleBarButton"
+                                Click="MaximizeWindow"
+                                ToolTip.Tip="Maximizar">
+                            <Viewbox Width="12" Height="12">
+                                <Path Data="{StaticResource IconMaximize}" Classes="windowIcon"/>
+                            </Viewbox>
+                        </Button>
+                        <Button Classes="titleBarButton closeButton"
+                                Click="CloseWindow"
+                                ToolTip.Tip="Fechar">
+                            <Viewbox Width="12" Height="12">
+                                <Path Data="{StaticResource IconClose}" Classes="windowIcon"/>
+                            </Viewbox>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Main Content -->
+            <Border Background="{DynamicResource BackgroundBrush}">
+                <TextBlock Text="{Binding Greeting}" 
+                           Foreground="{DynamicResource TextPrimaryBrush}"
+                           HorizontalAlignment="Center" 
+                           VerticalAlignment="Center"/>
+            </Border>
+        </DockPanel>
+    </Border>
 
 </Window>
