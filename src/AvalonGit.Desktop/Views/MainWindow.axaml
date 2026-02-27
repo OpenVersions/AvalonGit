@@ -19,6 +19,30 @@
         PointerPressed="Window_PointerPressed">
 
     <Window.Styles>
+        <!-- MenuFlyoutPresenter Style -->
+        <Style Selector="MenuFlyoutPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="4"/>
+            <Setter Property="Margin" Value="8,4,0,0"/>
+        </Style>
+        
+        <!-- MenuItem Hover Style -->
+        <Style Selector="MenuItem:pointerover /template/ Border">
+            <Setter Property="Background">
+                <Setter.Value>
+                    <SolidColorBrush Color="#FFFFFFFF" Opacity="0.08"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        
+        <!-- Separator Style -->
+        <Style Selector="Separator">
+            <Setter Property="Background" Value="#FFFFFFFF"/>
+            <Setter Property="Opacity" Value="0.1"/>
+            <Setter Property="Margin" Value="8,4"/>
+        </Style>
         <Style Selector="Path#MaximizeIcon">
             <Setter Property="Data" Value="{StaticResource IconMaximize}"/>
         </Style>
@@ -41,14 +65,61 @@
             <Border DockPanel.Dock="Top" 
                     Background="{DynamicResource SurfaceBrush}">
                 <Grid ColumnDefinitions="Auto,*,Auto">
-                    <!-- Menu Items -->
-                    <StackPanel Grid.Column="0" Orientation="Horizontal">
-                        <Button Classes="menuButton" Content="_Arquivo" />
-                        <Button Classes="menuButton" Content="_Editar" />
-                        <Button Classes="menuButton" Content="_Repositório" />
-                        <Button Classes="menuButton" Content="_Preferências" />
-                        <Button Classes="menuButton" Content="_Ajuda" />
-                    </StackPanel>
+                    <!-- Hamburger Menu -->
+                    <Button Grid.Column="0" Classes="titleBarButton" ToolTip.Tip="Menu">
+                        <Button.Flyout>
+                            <MenuFlyout Placement="BottomEdgeAlignedLeft">
+                                <MenuItem Header="Abrir Repositório" Command="{Binding OpenRepositoryCommand}">
+                                    <MenuItem.Icon>
+                                        <PathIcon Data="{StaticResource IconFolder}" Foreground="{DynamicResource TextPrimaryBrush}" Width="28" Height="28" Margin="0,0,10,0"/>
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem Header="Clonar Repositório" Command="{Binding CloneRepositoryCommand}">
+                                    <MenuItem.Icon>
+                                        <PathIcon Data="{StaticResource IconClone}" Foreground="{DynamicResource TextPrimaryBrush}" Width="28" Height="28" Margin="0,0,10,0"/>
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem Header="Novo Repositório">
+                                    <MenuItem.Icon>
+                                        <PathIcon Data="{StaticResource IconAdd}" Foreground="{DynamicResource TextPrimaryBrush}" Width="28" Height="28" Margin="0,0,10,0"/>
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <Separator/>
+                                <MenuItem Header="Preferências">
+                                    <MenuItem.Icon>
+                                        <PathIcon Data="{StaticResource IconSettings}" Foreground="{DynamicResource TextPrimaryBrush}" Width="28" Height="28" Margin="0,0,10,0"/>
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem Header="Atalhos de Teclado">
+                                    <MenuItem.Icon>
+                                        <PathIcon Data="{StaticResource IconKeyboard}" Foreground="{DynamicResource TextPrimaryBrush}" Width="28" Height="28" Margin="0,0,10,0"/>
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <Separator/>
+                                <MenuItem Header="Verificar Atualizações">
+                                    <MenuItem.Icon>
+                                        <PathIcon Data="{StaticResource IconUpdate}" Foreground="{DynamicResource TextPrimaryBrush}" Width="28" Height="28" Margin="0,0,10,0"/>
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem Header="Sobre" Click="OpenAboutWindow">
+                                    <MenuItem.Icon>
+                                        <PathIcon Data="{StaticResource IconInfo}" Foreground="{DynamicResource TextPrimaryBrush}" Width="28" Height="28" Margin="0,0,10,0"/>
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <Separator/>
+                                <MenuItem Header="Sair" Click="CloseWindow">
+                                    <MenuItem.Icon>
+                                        <PathIcon Data="{StaticResource IconExit}" Foreground="{DynamicResource TextPrimaryBrush}" Width="28" Height="28" Margin="0,0,10,0"/>
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                            </MenuFlyout>
+                        </Button.Flyout>
+                        <Viewbox Width="16" Height="16" Stretch="Uniform">
+                            <Path Data="{StaticResource IconHamburger}"
+                                  Fill="{DynamicResource TextPrimaryBrush}"
+                                  Classes="windowIcon"/>
+                        </Viewbox>
+                    </Button>
                     
                     <!-- Window Buttons -->
                     <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="0">

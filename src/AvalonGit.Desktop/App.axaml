@@ -10,20 +10,16 @@
   
     <Application.Styles>
         <FluentTheme />
-        <StyleInclude Source="avares://AvalonGit.Desktop/Themes/AvalonGitStyles.axaml" />
+        <StyleInclude Source="Themes/AvalonGitStyles.axaml" />
     </Application.Styles>
 
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceInclude Source="avares://AvalonGit.Desktop/Themes/AvalonGitTheme.axaml" />
+                <ResourceInclude Source="Themes/AvalonGitTheme.axaml" />
+                <ResourceInclude Source="Resources/icons.axaml"/>
+                <ResourceInclude Source="Resources/Strings.axaml"></ResourceInclude>
             </ResourceDictionary.MergedDictionaries>
-
-            <!-- Window Control Icons -->
-            <StreamGeometry x:Key="IconMinimize">M2,12H22</StreamGeometry>
-            <StreamGeometry x:Key="IconMaximize">M3,3 H11 V11 H3 V3 M4,4 V10 H10 V4 H4</StreamGeometry>
-            <StreamGeometry x:Key="IconRestore">M3,5 H9 V11 H3 V5 M5,5 V3 H11 V9 H9</StreamGeometry>
-            <StreamGeometry x:Key="IconClose">M2,2L22,22M22,2L2,22</StreamGeometry>
         </ResourceDictionary>
     </Application.Resources>
 </Application>
