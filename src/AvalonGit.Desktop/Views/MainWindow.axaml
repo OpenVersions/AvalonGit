@@ -69,7 +69,7 @@
                     <Button Grid.Column="0" Classes="titleBarButton" ToolTip.Tip="Menu">
                         <Button.Flyout>
                             <MenuFlyout Placement="BottomEdgeAlignedLeft">
-                                <MenuItem Header="Abrir Repositório" Command="{Binding OpenRepositoryCommand}">
+                                <MenuItem Header="Abrir Repositório" Click="OpenRepository">
                                     <MenuItem.Icon>
                                         <PathIcon Data="{StaticResource IconFolder}" Foreground="{DynamicResource TextPrimaryBrush}" Width="28" Height="28" Margin="0,0,10,0"/>
                                     </MenuItem.Icon>
@@ -151,12 +151,75 @@
             </Border>
 
             <!-- Main Content -->
-            <Border Background="{DynamicResource BackgroundBrush}">
-                <TextBlock Text="{Binding Greeting}" 
-                           Foreground="{DynamicResource TextPrimaryBrush}"
-                           HorizontalAlignment="Center" 
-                           VerticalAlignment="Center"/>
-            </Border>
+            <Grid ColumnDefinitions="300, *">
+                <!-- Sidebar: Changes -->
+                <Border Grid.Column="0" 
+                        Background="{DynamicResource SurfaceBrush}" 
+                        BorderBrush="{DynamicResource BackgroundBrush}" 
+                        BorderThickness="0,0,1,0">
+                    <Grid RowDefinitions="Auto, *, Auto, *">
+                        <!-- Unstaged Files -->
+                        <TextBlock Grid.Row="0" Text="ALTERAÇÕES (UNSTAGED)" 
+                                   Margin="10,10,10,5" FontSize="11" FontWeight="Bold" 
+                                   Foreground="{DynamicResource TextSecondaryBrush}"/>
+                        
+                        <ListBox Grid.Row="1" ItemsSource="{Binding UnstagedFiles}" 
+                                 Background="Transparent" BorderThickness="0">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid ColumnDefinitions="*, Auto">
+                                        <TextBlock Text="{Binding FilePath}" 
+                                                   VerticalAlignment="Center" 
+                                                   TextTrimming="CharacterEllipsis"/>
+                                        <Button Grid.Column="1" 
+                                                Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).StageFileCommand}" 
+                                                CommandParameter="{Binding FilePath}"
+                                                Classes="titleBarButton" Padding="4">
+                                            <PathIcon Data="{StaticResource IconAdd}" Width="12" Height="12"/>
+                                        </Button>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+
+                        <!-- Staged Files -->
+                        <TextBlock Grid.Row="2" Text="STAGED" 
+                                   Margin="10,10,10,5" FontSize="11" FontWeight="Bold" 
+                                   Foreground="{DynamicResource TextSecondaryBrush}"/>
+                        
+                        <ListBox Grid.Row="3" ItemsSource="{Binding StagedFiles}" 
+                                 Background="Transparent" BorderThickness="0">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid ColumnDefinitions="*, Auto">
+                                        <TextBlock Text="{Binding FilePath}" 
+                                                   VerticalAlignment="Center" 
+                                                   TextTrimming="CharacterEllipsis"/>
+                                        <Button Grid.Column="1" 
+                                                Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).UnstageFileCommand}" 
+                                                CommandParameter="{Binding FilePath}"
+                                                Classes="titleBarButton" Padding="4">
+                                            <PathIcon Data="{StaticResource IconMinimize}" Width="12" Height="12"/>
+                                        </Button>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Grid>
+                </Border>
+
+                <!-- Editor / Content Area -->
+                <Border Grid.Column="1" Background="{DynamicResource BackgroundBrush}">
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10">
+                        <TextBlock Text="{Binding Greeting}" 
+                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                   FontSize="24"/>
+                        <TextBlock Text="{Binding RepositoryPath}" 
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
         </DockPanel>
     </Border>
 
