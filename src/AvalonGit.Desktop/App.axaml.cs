@@ -6,6 +6,7 @@ using System.Linq;
 using Avalonia.Markup.Xaml;
 using AvalonGit.Desktop.ViewModels;
 using AvalonGit.Desktop.Views;
+using AvalonGit.Core.Services;
 
 namespace AvalonGit.Desktop;
 
@@ -20,12 +21,13 @@ public partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            // Avoid duplicate validations from both Avalonia and ReactiveUI. 
-            // More info: https://docs.avaloniaui.net/docs/guides/development-guides/data-validation#manage-validationplugins
             DisableAvaloniaDataAnnotationValidation();
+            var gitService = new GitService();
+            var mainViewModel = new MainWindowViewModel(gitService);
+            
             desktop.MainWindow = new MainWindow
             {
-                DataContext = new MainWindowViewModel(),
+                DataContext = mainViewModel
             };
         }
 
