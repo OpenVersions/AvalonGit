@@ -18,6 +18,9 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
     private readonly IGitService _gitService;
     private string _repositoryPath = string.Empty;
     private FileSystemWatcher? _watcher;
+    private GitFileStatus? _selectedUnstagedFile;
+    private GitFileStatus? _selectedStagedFile;
+    private bool _isLoadingDiff;
 
     public string Greeting { get; } = "Welcome to AvalonGit!";
     
@@ -29,6 +32,25 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
 
     public ObservableCollection<GitFileStatus> UnstagedFiles { get; } = new();
     public ObservableCollection<GitFileStatus> StagedFiles { get; } = new();
+    public ObservableCollection<DiffLine> DiffLines { get; } = new();
+
+    public GitFileStatus? SelectedUnstagedFile
+    {
+        get => _selectedUnstagedFile;
+        set => this.RaiseAndSetIfChanged(ref _selectedUnstagedFile, value);
+    }
+
+    public GitFileStatus? SelectedStagedFile
+    {
+        get => _selectedStagedFile;
+        set => this.RaiseAndSetIfChanged(ref _selectedStagedFile, value);
+    }
+
+    public bool IsLoadingDiff
+    {
+        get => _isLoadingDiff;
+        set => this.RaiseAndSetIfChanged(ref _isLoadingDiff, value);
+    }
     
     public ReactiveCommand<Unit, Unit> OpenRepositoryCommand { get; }
     public ReactiveCommand<Unit, Unit> CloneRepositoryCommand { get; }
@@ -46,13 +68,74 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
         var canExecuteGitOps = this.WhenAnyValue(
             x => x.RepositoryPath, 
             path => !string.IsNullOrWhiteSpace(path)
-        ).ObserveOn(RxApp.MainThreadScheduler);
+        );
         
-        StageFileCommand = ReactiveCommand.CreateFromTask<string>(ExecuteStageAsync, canExecuteGitOps);
-        UnstageFileCommand = ReactiveCommand.CreateFromTask<string>(ExecuteUnstageAsync, canExecuteGitOps);
+        StageFileCommand = ReactiveCommand.CreateFromTask<string>(
+            ExecuteStageAsync, 
+            canExecuteGitOps,
+            outputScheduler: RxApp.MainThreadScheduler);
+            
+        UnstageFileCommand = ReactiveCommand.CreateFromTask<string>(
+            ExecuteUnstageAsync, 
+            canExecuteGitOps,
+            outputScheduler: RxApp.MainThreadScheduler);
         
         StageFileCommand.ThrownExceptions.Subscribe(ex => Console.WriteLine($"[Erro Stage] {ex.Message}"));
         UnstageFileCommand.ThrownExceptions.Subscribe(ex => Console.WriteLine($"[Erro Unstage] {ex.Message}"));
+
+        // Garante que apenas um arquivo esteja selecionado por vez e busca o diff
+        this.WhenAnyValue(x => x.SelectedUnstagedFile)
+            .Where(x => x != null)
+            .Subscribe(_ => SelectedStagedFile = null);
+
+        this.WhenAnyValue(x => x.SelectedStagedFile)
+            .Where(x => x != null)
+            .Subscribe(_ => SelectedUnstagedFile = null);
+
+        this.WhenAnyValue(x => x.SelectedUnstagedFile, x => x.SelectedStagedFile)
+            .Throttle(TimeSpan.FromMilliseconds(100))
+            .ObserveOn(RxApp.MainThreadScheduler)
+            .Subscribe(async tuple =>
+            {
+                var (unstaged, staged) = tuple;
+                var selected = unstaged ?? staged;
+                
+                if (selected == null)
+                {
+                    ClearDiff();
+                    return;
+                }
+
+                IsLoadingDiff = true;
+                var path = RepositoryPath;
+                var fileName = selected.FilePath;
+                var isStaged = staged != null;
+
+                try
+                {
+                    var lines = await Task.Run(() => _gitService.GetFileDiff(path, fileName, isStaged));
+                    
+                    DiffLines.Clear();
+                    foreach (var line in lines)
+                    {
+                        DiffLines.Add(line);
+                    }
+
+                    if (!DiffLines.Any())
+                    {
+                        DiffLines.Add(new DiffLine("Nenhuma alteração de texto detectada.", DiffLineType.Context));
+                    }
+                }
+                catch (Exception ex)
+                {
+                    DiffLines.Clear();
+                    DiffLines.Add(new DiffLine($"Erro ao carregar diff: {ex.Message}", DiffLineType.Context));
+                }
+                finally
+                {
+                    IsLoadingDiff = false;
+                }
+            });
 
         //monitora mudanças no caminho do repositório
         this.WhenAnyValue(x => x.RepositoryPath)
@@ -92,6 +175,12 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
             .Subscribe(async _ => await RefreshStatusAsync());
     }
     
+    private void ClearDiff()
+    {
+        DiffLines.Clear();
+        IsLoadingDiff = false;
+    }
+
     private async Task ExecuteStageAsync(string filePath)
     {
         var path = RepositoryPath;
@@ -115,6 +204,9 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
             {
                 UnstagedFiles.Clear();
                 StagedFiles.Clear();
+                ClearDiff();
+                SelectedUnstagedFile = null;
+                SelectedStagedFile = null;
             });
             return;
         }
@@ -128,6 +220,12 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
             {
                 UpdateCollection(UnstagedFiles, status.Where(x => x.State == GitFileState.Unstaged));
                 UpdateCollection(StagedFiles, status.Where(x => x.State == GitFileState.Staged));
+                
+                // Limpa seleção se os arquivos não existem mais
+                if (SelectedUnstagedFile != null && !UnstagedFiles.Any(x => x.FilePath == SelectedUnstagedFile.FilePath))
+                    SelectedUnstagedFile = null;
+                if (SelectedStagedFile != null && !StagedFiles.Any(x => x.FilePath == SelectedStagedFile.FilePath))
+                    SelectedStagedFile = null;
             });
         }
         catch (Exception ex)
