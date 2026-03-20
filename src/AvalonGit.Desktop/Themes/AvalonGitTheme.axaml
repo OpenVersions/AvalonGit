@@ -27,4 +27,17 @@
     <SolidColorBrush x:Key="TextPrimaryBrush" Color="{StaticResource TextPrimaryColor}" />
     <SolidColorBrush x:Key="TextSecondaryBrush" Color="{StaticResource TextSecondaryColor}" />
 
+    <!-- Diff Brushes -->
+    <SolidColorBrush x:Key="DiffAddedBackground" Color="#15291E" />
+    <SolidColorBrush x:Key="DiffAddedForeground" Color="#4ADE80" />
+    
+    <SolidColorBrush x:Key="DiffRemovedBackground" Color="#2C161A" />
+    <SolidColorBrush x:Key="DiffRemovedForeground" Color="#F87171" />
+    
+    <SolidColorBrush x:Key="DiffHeaderBackground" Color="#1E293B" />
+    <SolidColorBrush x:Key="DiffHeaderForeground" Color="#3B82F6" />
+
+    <SolidColorBrush x:Key="DiffGutterBackground" Color="#1A1D21" />
+    <SolidColorBrush x:Key="DiffGutterForeground" Color="#475569" />
+    <SolidColorBrush x:Key="DiffIndicatorForeground" Color="#64748B" />
 </ResourceDictionary>
