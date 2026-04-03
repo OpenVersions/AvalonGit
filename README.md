@@ -16,7 +16,7 @@
 ## ✨ Funcionalidades
 
 ### Core (Prioridade Alta)
-- [ ] Stage e Unstage de arquivos
+- [x] Stage e Unstage de arquivos
 - [ ] Operações básicas: Commit, Push, Pull, Fetch
 - [ ] Visualização de histórico de commits
 - [ ] Gerenciamento de Branches (Create/Checkout)
