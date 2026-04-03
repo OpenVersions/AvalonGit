@@ -1,0 +1,55 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:AvalonGit.Desktop.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="350" d:DesignHeight="120"
+             x:Class="AvalonGit.Desktop.Views.ToastPanel"
+             x:DataType="vm:ToastViewModel"
+             x:CompileBindings="True">
+    <Border x:Name="ToastBorder"
+            Background="{DynamicResource SurfaceBrush}"
+            BorderThickness="1"
+            CornerRadius="8"
+            Padding="16"
+            Margin="16"
+            BoxShadow="0 4 12 0 #40000000"
+            IsVisible="{Binding IsVisible}">
+        <Grid RowDefinitions="Auto,Auto,Auto">
+            <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,8">
+                <PathIcon Grid.Column="0"
+                          Width="20" Height="20"
+                          Margin="0,0,12,0"
+                          Foreground="{Binding IconColor}">
+                    <PathIcon.Data>
+                        <Binding Path="IconData"/>
+                    </PathIcon.Data>
+                </PathIcon>
+                <TextBlock Grid.Column="1"
+                           Text="{Binding Title}"
+                           FontWeight="SemiBold"
+                           FontSize="14"
+                           Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <Button Grid.Column="2"
+                        Classes="titleBarButton"
+                        Click="CloseToast"
+                        Padding="4">
+                    <PathIcon Data="{StaticResource IconClose}" Width="12" Height="12"/>
+                </Button>
+            </Grid>
+            
+            <TextBlock Grid.Row="1"
+                       Text="{Binding Message}"
+                       TextWrapping="Wrap"
+                       Foreground="{DynamicResource TextSecondaryBrush}"
+                       Margin="0,0,0,8"/>
+            
+            <Button Grid.Row="2"
+                    Content="Detalhes"
+                    Classes="titleBarButton"
+                    HorizontalAlignment="Left"
+                    IsVisible="{Binding HasDetails}"
+                    Click="ShowDetails"/>
+        </Grid>
+    </Border>
+</UserControl>

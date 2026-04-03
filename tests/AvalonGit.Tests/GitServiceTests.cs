@@ -122,6 +122,43 @@ public class GitServiceTests : IDisposable
         Assert.Throws<InvalidOperationException>(() => _gitService.Commit(_repoPath, "test"));
     }
 
+    [Fact]
+    public void GetRemotes_Should_ReturnEmptyList()
+    {
+        var remotes = _gitService.GetRemotes(_repoPath);
+
+        Assert.NotNull(remotes);
+    }
+
+    [Fact]
+    public void GetBranches_Should_ReturnBranches()
+    {
+        string fileName = "initial.txt";
+        string filePath = Path.Combine(_repoPath, fileName);
+        File.WriteAllText(filePath, "initial content");
+        _gitService.StageFile(_repoPath, fileName);
+        _gitService.Commit(_repoPath, "Initial commit");
+
+        var branches = _gitService.GetBranches(_repoPath);
+
+        Assert.NotNull(branches);
+    }
+
+    [Fact]
+    public void GetBranches_Should_ReturnAtLeastOneLocalBranch()
+    {
+        string fileName = "initial.txt";
+        string filePath = Path.Combine(_repoPath, fileName);
+        File.WriteAllText(filePath, "initial content");
+        _gitService.StageFile(_repoPath, fileName);
+        _gitService.Commit(_repoPath, "Initial commit");
+
+        var branches = _gitService.GetBranches(_repoPath);
+        var localBranches = branches.Where(b => !b.IsRemote).ToList();
+
+        Assert.NotNull(localBranches);
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(_repoPath))

@@ -239,4 +239,119 @@ public class GitService : IGitService
             throw new InvalidOperationException($"Falha ao realizar commit: {ex.Message}", ex);
         }
     }
+
+    public IEnumerable<GitRemote> GetRemotes(string repoPath)
+    {
+        if (string.IsNullOrWhiteSpace(repoPath))
+            return Enumerable.Empty<GitRemote>();
+
+        var remotes = new List<GitRemote>();
+        try
+        {
+            using var repo = new Repository(repoPath);
+            foreach (var remote in repo.Network.Remotes)
+            {
+                var url = remote.Url ?? string.Empty;
+                var pushUrl = remote.PushUrl ?? remote.Url ?? string.Empty;
+                remotes.Add(new GitRemote(remote.Name, url, pushUrl));
+            }
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Erro ao obter remotes: {ex.Message}", ex);
+        }
+        return remotes;
+    }
+
+    public IEnumerable<GitBranch> GetBranches(string repoPath)
+    {
+        if (string.IsNullOrWhiteSpace(repoPath))
+            return Enumerable.Empty<GitBranch>();
+
+        var branches = new List<GitBranch>();
+        try
+        {
+            using var repo = new Repository(repoPath);
+            var currentBranchName = repo.Head?.FriendlyName ?? string.Empty;
+
+            foreach (var branch in repo.Branches)
+            {
+                branches.Add(new GitBranch(
+                    branch.CanonicalName,
+                    branch.IsRemote,
+                    branch.FriendlyName == currentBranchName,
+                    branch.FriendlyName));
+            }
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Erro ao obter branches: {ex.Message}", ex);
+        }
+        return branches;
+    }
+
+    public void Push(string repoPath, string remoteName, string branchName)
+    {
+        if (string.IsNullOrWhiteSpace(repoPath))
+            throw new ArgumentNullException(nameof(repoPath));
+
+        if (string.IsNullOrWhiteSpace(remoteName))
+            throw new ArgumentException("Nome do remote não pode estar vazio.", nameof(remoteName));
+
+        if (string.IsNullOrWhiteSpace(branchName))
+            throw new ArgumentException("Nome da branch não pode estar vazio.", nameof(branchName));
+
+        try
+        {
+            using var repo = new Repository(repoPath);
+
+            var remote = repo.Network.Remotes[remoteName];
+            if (remote == null)
+                throw new InvalidOperationException($"Remote '{remoteName}' não encontrado.");
+
+            var branch = repo.Branches[branchName];
+            if (branch == null)
+                throw new InvalidOperationException($"Branch '{branchName}' não encontrada.");
+
+            var refSpec = branch.IsRemote 
+                ? branch.CanonicalName 
+                : branch.FriendlyName + ":refs/heads/" + branch.FriendlyName;
+            repo.Network.Push(repo.Network.Remotes[remoteName], refSpec);
+        }
+        catch (Exception ex)
+        {
+            var message = ex.Message.ToLowerInvariant();
+            if (message.Contains("authentication") || message.Contains("credential") || message.Contains("not authenticated"))
+                throw new InvalidOperationException("Falha na autenticação. Verifique suas credenciais.", ex);
+            if (message.Contains("rejected") || message.Contains("non-fast-forward"))
+                throw new InvalidOperationException("Push rejeitado. A branch remota tem alterações que você precisa integrar antes de fazer push.", ex);
+            if (message.Contains("could not resolve host") || message.Contains("network") || message.Contains("connection"))
+                throw new InvalidOperationException("Erro de rede: não foi possível conectar ao servidor remoto.", ex);
+            if (message.Contains("no remote configured") || message.Contains("no configured push"))
+                throw new InvalidOperationException($"Remote '{remoteName}' não está configurado para push.");
+            throw new InvalidOperationException($"Erro ao fazer push: {ex.Message}", ex);
+        }
+    }
+
+    public void AddRemote(string repoPath, string name, string url)
+    {
+        if (string.IsNullOrWhiteSpace(repoPath))
+            throw new ArgumentNullException(nameof(repoPath));
+
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ArgumentException("Nome do remote não pode estar vazio.", nameof(name));
+
+        if (string.IsNullOrWhiteSpace(url))
+            throw new ArgumentException("URL do remote não pode estar vazia.", nameof(url));
+
+        try
+        {
+            using var repo = new Repository(repoPath);
+            repo.Network.Remotes.Add(name, url);
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Erro ao adicionar remote: {ex.Message}", ex);
+        }
+    }
 }
