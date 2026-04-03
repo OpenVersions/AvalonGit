@@ -158,7 +158,7 @@
                         Background="{DynamicResource SurfaceBrush}" 
                         BorderBrush="{DynamicResource BackgroundBrush}" 
                         BorderThickness="0,0,1,0">
-                    <Grid RowDefinitions="Auto, *, Auto, *">
+                    <Grid RowDefinitions="Auto, *, Auto, *, Auto">
                         <!-- Unstaged Files -->
                         <TextBlock Grid.Row="0" Text="ALTERAÇÕES (UNSTAGED)" 
                                     Margin="10,10,10,5" FontSize="11" FontWeight="Bold" 
@@ -208,6 +208,19 @@
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
+
+                        <!-- Commit Area -->
+                        <StackPanel Grid.Row="4" Margin="10" Spacing="8">
+                            <TextBox Text="{Binding CommitMessage}"
+                                     Watermark="Mensagem do commit..."
+                                     AcceptsReturn="True"
+                                     MinHeight="60"
+                                     MaxHeight="100"/>
+                            <Button Content="Commit"
+                                    Command="{Binding CommitCommand}"
+                                    HorizontalAlignment="Stretch"
+                                    Classes="titleBarButton"/>
+                        </StackPanel>
                     </Grid>
                 </Border>
 

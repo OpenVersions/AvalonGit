@@ -20,6 +20,10 @@ public class GitServiceTests : IDisposable
         
         Repository.Init(_repoPath);
         
+        using var repo = new Repository(_repoPath);
+        repo.Config.Set("user.name", "Test User");
+        repo.Config.Set("user.email", "test@example.com");
+        
         _gitService = new GitService();
     }
 
@@ -54,6 +58,68 @@ public class GitServiceTests : IDisposable
         var status = _gitService.GetStatus(_repoPath);
         var unstagedFile = status.FirstOrDefault(f => f.FilePath == fileName && f.State == GitFileState.Unstaged);
         Assert.NotNull(unstagedFile);
+    }
+
+    [Fact]
+    public void Commit_Should_CreateCommitWithMessage()
+    {
+        string fileName = "commit_test.txt";
+        string filePath = Path.Combine(_repoPath, fileName);
+        File.WriteAllText(filePath, "test content");
+
+        _gitService.StageFile(_repoPath, fileName);
+
+        var commit = _gitService.Commit(_repoPath, "Test commit message");
+
+        Assert.NotNull(commit);
+        Assert.NotNull(commit.Sha);
+        Assert.Equal("Test commit message", commit.Message);
+    }
+
+    [Fact]
+    public void Commit_Should_ReturnCommitInfo()
+    {
+        string fileName = "commit_info_test.txt";
+        string filePath = Path.Combine(_repoPath, fileName);
+        File.WriteAllText(filePath, "content");
+
+        _gitService.StageFile(_repoPath, fileName);
+
+        var commit = _gitService.Commit(_repoPath, "Commit with info");
+
+        Assert.NotNull(commit);
+        Assert.NotNull(commit.Sha);
+        Assert.Equal("Commit with info", commit.Message);
+        Assert.Equal("Test User", commit.Author);
+        Assert.Equal("test@example.com", commit.Email);
+    }
+
+    [Fact]
+    public void Commit_Should_ThrowException_When_EmptyMessage()
+    {
+        string fileName = "empty_msg_test.txt";
+        string filePath = Path.Combine(_repoPath, fileName);
+        File.WriteAllText(filePath, "content");
+
+        _gitService.StageFile(_repoPath, fileName);
+
+        Assert.Throws<ArgumentException>(() => _gitService.Commit(_repoPath, ""));
+    }
+
+    [Fact]
+    public void Commit_Should_ThrowException_When_NoRepo()
+    {
+        Assert.Throws<ArgumentNullException>(() => _gitService.Commit("", "test"));
+    }
+
+    [Fact]
+    public void Commit_Should_ThrowException_When_NoStagedFiles()
+    {
+        string fileName = "no_staged_test.txt";
+        string filePath = Path.Combine(_repoPath, fileName);
+        File.WriteAllText(filePath, "content");
+
+        Assert.Throws<InvalidOperationException>(() => _gitService.Commit(_repoPath, "test"));
     }
 
     public void Dispose()

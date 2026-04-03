@@ -21,6 +21,7 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
     private GitFileStatus? _selectedUnstagedFile;
     private GitFileStatus? _selectedStagedFile;
     private bool _isLoadingDiff;
+    private string _commitMessage = string.Empty;
 
     public string Greeting { get; } = "Welcome to AvalonGit!";
     
@@ -51,11 +52,18 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
         get => _isLoadingDiff;
         set => this.RaiseAndSetIfChanged(ref _isLoadingDiff, value);
     }
+
+    public string CommitMessage
+    {
+        get => _commitMessage;
+        set => this.RaiseAndSetIfChanged(ref _commitMessage, value);
+    }
     
     public ReactiveCommand<Unit, Unit> OpenRepositoryCommand { get; }
     public ReactiveCommand<Unit, Unit> CloneRepositoryCommand { get; }
     public ReactiveCommand<string, Unit> StageFileCommand { get; }
     public ReactiveCommand<string, Unit> UnstageFileCommand { get; }
+    public ReactiveCommand<Unit, Unit> CommitCommand { get; }
     
     public MainWindowViewModel(IGitService gitService)
     {
@@ -82,6 +90,23 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
         
         StageFileCommand.ThrownExceptions.Subscribe(ex => Console.WriteLine($"[Erro Stage] {ex.Message}"));
         UnstageFileCommand.ThrownExceptions.Subscribe(ex => Console.WriteLine($"[Erro Unstage] {ex.Message}"));
+
+        var canCommit = this.WhenAnyValue(
+            x => x.RepositoryPath,
+            x => x.StagedFiles.Count,
+            x => x.CommitMessage,
+            (path, stagedCount, message) =>
+                !string.IsNullOrWhiteSpace(path) &&
+                stagedCount > 0 &&
+                !string.IsNullOrWhiteSpace(message)
+        );
+
+        CommitCommand = ReactiveCommand.CreateFromTask(
+            ExecuteCommitAsync,
+            canCommit,
+            outputScheduler: RxApp.MainThreadScheduler);
+
+        CommitCommand.ThrownExceptions.Subscribe(ex => Console.WriteLine($"[Erro Commit] {ex.Message}"));
 
         // Garante que apenas um arquivo esteja selecionado por vez e busca o diff
         this.WhenAnyValue(x => x.SelectedUnstagedFile)
@@ -192,6 +217,17 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
     {
         var path = RepositoryPath;
         await Task.Run(() => _gitService.UnstageFile(path, filePath));
+        await RefreshStatusAsync();
+    }
+
+    private async Task ExecuteCommitAsync()
+    {
+        var path = RepositoryPath;
+        var message = CommitMessage;
+        
+        await Task.Run(() => _gitService.Commit(path, message));
+        
+        CommitMessage = string.Empty;
         await RefreshStatusAsync();
     }
 

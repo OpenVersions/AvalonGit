@@ -185,4 +185,58 @@ public class GitService : IGitService
         }
         return diffLines;
     }
+
+    public GitCommit? Commit(string repoPath, string message)
+    {
+        if (string.IsNullOrWhiteSpace(repoPath))
+            throw new ArgumentNullException(nameof(repoPath));
+
+        if (string.IsNullOrWhiteSpace(message))
+            throw new ArgumentException("A mensagem de commit não pode estar vazia.", nameof(message));
+
+        try
+        {
+            using var repo = new Repository(repoPath);
+
+            var userName = repo.Config.Get<string>("user.name");
+            var userEmail = repo.Config.Get<string>("user.email");
+
+            if (userName == null || string.IsNullOrWhiteSpace(userName.Value) ||
+                userEmail == null || string.IsNullOrWhiteSpace(userEmail.Value))
+            {
+                throw new InvalidOperationException(
+                    "Usuário do Git não configurado. Configure seu nome e email usando:\n" +
+                    "git config --global user.name \"Seu Nome\"\n" +
+                    "git config --global user.email \"seu@email.com\"");
+            }
+
+            var signature = new Signature(userName.Value, userEmail.Value, DateTimeOffset.Now);
+
+            var status = repo.RetrieveStatus(new StatusOptions());
+            var hasStagedChanges = status.Any(s => 
+                s.State.HasFlag(FileStatus.NewInIndex) ||
+                s.State.HasFlag(FileStatus.ModifiedInIndex) ||
+                s.State.HasFlag(FileStatus.DeletedFromIndex) ||
+                s.State.HasFlag(FileStatus.RenamedInIndex) ||
+                s.State.HasFlag(FileStatus.TypeChangeInIndex));
+
+            if (!hasStagedChanges)
+            {
+                throw new InvalidOperationException("Não há alterações staged para commit.");
+            }
+
+            var commit = repo.Commit(message, signature, signature);
+
+            return new GitCommit(
+                commit.Sha,
+                commit.Message.Trim(),
+                commit.Author.Name,
+                commit.Author.Email,
+                commit.Author.When);
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Falha ao realizar commit: {ex.Message}", ex);
+        }
+    }
 }
