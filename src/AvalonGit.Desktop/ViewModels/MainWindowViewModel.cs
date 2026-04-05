@@ -8,8 +8,12 @@ using System.Reactive.Linq;
 using System.Threading.Tasks;
 using ReactiveUI;
 using Avalonia.Threading;
+using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia;
 using AvalonGit.Core.IServices;
 using AvalonGit.Core.Models;
+using AvalonGit.Desktop.Views;
 
 namespace AvalonGit.Desktop.ViewModels;
 
@@ -21,6 +25,13 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
     private GitFileStatus? _selectedUnstagedFile;
     private GitFileStatus? _selectedStagedFile;
     private bool _isLoadingDiff;
+    private string _commitMessage = string.Empty;
+    private string _currentBranch = string.Empty;
+    private string _selectedRemote = string.Empty;
+    private bool _showErrorDetails;
+    private string _errorLog = string.Empty;
+    private bool _isPushing;
+    private ToastViewModel _toastViewModel = new();
 
     public string Greeting { get; } = "Welcome to AvalonGit!";
     
@@ -51,11 +62,56 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
         get => _isLoadingDiff;
         set => this.RaiseAndSetIfChanged(ref _isLoadingDiff, value);
     }
+
+    public string CommitMessage
+    {
+        get => _commitMessage;
+        set => this.RaiseAndSetIfChanged(ref _commitMessage, value);
+    }
+
+    public string CurrentBranch
+    {
+        get => _currentBranch;
+        set => this.RaiseAndSetIfChanged(ref _currentBranch, value);
+    }
+
+    public string SelectedRemote
+    {
+        get => _selectedRemote;
+        set => this.RaiseAndSetIfChanged(ref _selectedRemote, value);
+    }
+
+    public bool ShowErrorDetails
+    {
+        get => _showErrorDetails;
+        set => this.RaiseAndSetIfChanged(ref _showErrorDetails, value);
+    }
+
+    public string ErrorLog
+    {
+        get => _errorLog;
+        set => this.RaiseAndSetIfChanged(ref _errorLog, value);
+    }
+
+    public bool IsPushing
+    {
+        get => _isPushing;
+        set => this.RaiseAndSetIfChanged(ref _isPushing, value);
+    }
+
+    public ToastViewModel Toast => _toastViewModel;
+
+    public ObservableCollection<GitRemote> Remotes { get; } = new();
+    public ObservableCollection<GitBranch> Branches { get; } = new();
     
     public ReactiveCommand<Unit, Unit> OpenRepositoryCommand { get; }
     public ReactiveCommand<Unit, Unit> CloneRepositoryCommand { get; }
     public ReactiveCommand<string, Unit> StageFileCommand { get; }
     public ReactiveCommand<string, Unit> UnstageFileCommand { get; }
+    public ReactiveCommand<Unit, Unit> CommitCommand { get; }
+    public ReactiveCommand<Unit, Unit> PushCommand { get; }
+    public ReactiveCommand<string, Unit> PushToRemoteCommand { get; }
+    public ReactiveCommand<Unit, Unit> AddRemoteCommand { get; }
     
     public MainWindowViewModel(IGitService gitService)
     {
@@ -82,6 +138,54 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
         
         StageFileCommand.ThrownExceptions.Subscribe(ex => Console.WriteLine($"[Erro Stage] {ex.Message}"));
         UnstageFileCommand.ThrownExceptions.Subscribe(ex => Console.WriteLine($"[Erro Unstage] {ex.Message}"));
+
+        var canCommit = this.WhenAnyValue(
+            x => x.RepositoryPath,
+            x => x.StagedFiles.Count,
+            x => x.CommitMessage,
+            (path, stagedCount, message) =>
+                !string.IsNullOrWhiteSpace(path) &&
+                stagedCount > 0 &&
+                !string.IsNullOrWhiteSpace(message)
+        );
+
+        CommitCommand = ReactiveCommand.CreateFromTask(
+            ExecuteCommitAsync,
+            canCommit,
+            outputScheduler: RxApp.MainThreadScheduler);
+
+        CommitCommand.ThrownExceptions.Subscribe(ex => Console.WriteLine($"[Erro Commit] {ex.Message}"));
+
+        var canPush = this.WhenAnyValue(
+            x => x.RepositoryPath,
+            x => x.Remotes.Count,
+            x => x.CurrentBranch,
+            x => x.IsPushing,
+            (path, remoteCount, branch, isPushing) =>
+                !string.IsNullOrWhiteSpace(path) &&
+                remoteCount > 0 &&
+                !string.IsNullOrWhiteSpace(branch) &&
+                !isPushing
+        );
+
+        PushCommand = ReactiveCommand.CreateFromTask(
+            ExecutePushAsync,
+            canPush,
+            outputScheduler: RxApp.MainThreadScheduler);
+
+        PushToRemoteCommand = ReactiveCommand.CreateFromTask<string>(
+            ExecutePushToRemoteAsync,
+            canPush,
+            outputScheduler: RxApp.MainThreadScheduler);
+
+        AddRemoteCommand = ReactiveCommand.CreateFromTask(
+            ExecuteAddRemoteAsync,
+            canExecuteGitOps,
+            outputScheduler: RxApp.MainThreadScheduler);
+
+        PushCommand.ThrownExceptions.Subscribe(ex => Console.WriteLine($"[Erro Push] {ex.Message}"));
+        PushToRemoteCommand.ThrownExceptions.Subscribe(ex => Console.WriteLine($"[Erro Push] {ex.Message}"));
+        AddRemoteCommand.ThrownExceptions.Subscribe(ex => Console.WriteLine($"[Erro AddRemote] {ex.Message}"));
 
         // Garante que apenas um arquivo esteja selecionado por vez e busca o diff
         this.WhenAnyValue(x => x.SelectedUnstagedFile)
@@ -144,6 +248,7 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
             {
                 SetupWatcher(path);
                 await RefreshStatusAsync();
+                await RefreshBranchAndRemoteAsync();
             });
     }
 
@@ -195,6 +300,17 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
         await RefreshStatusAsync();
     }
 
+    private async Task ExecuteCommitAsync()
+    {
+        var path = RepositoryPath;
+        var message = CommitMessage;
+        
+        await Task.Run(() => _gitService.Commit(path, message));
+        
+        CommitMessage = string.Empty;
+        await RefreshStatusAsync();
+    }
+
     private async Task RefreshStatusAsync()
     {
         var path = RepositoryPath;
@@ -240,6 +356,120 @@ public class MainWindowViewModel : ViewModelBase, IDisposable
         foreach (var item in newItems)
         {
             collection.Add(item);
+        }
+    }
+
+    private async Task ExecutePushAsync()
+    {
+        var path = RepositoryPath;
+        var remoteName = Remotes.Any() ? Remotes.First().Name : "origin";
+        var branchName = CurrentBranch;
+
+        if (string.IsNullOrWhiteSpace(remoteName))
+        {
+            Toast.Show("Erro", "Nenhum remote configurado. Clique em + para adicionar um remote.", true);
+            return;
+        }
+
+        await ExecutePushToRemoteAsync(remoteName);
+    }
+
+    private async Task ExecutePushToRemoteAsync(string remoteName)
+    {
+        var path = RepositoryPath;
+        var branchName = CurrentBranch;
+
+        IsPushing = true;
+        ShowErrorDetails = false;
+        ErrorLog = string.Empty;
+
+        try
+        {
+            await Task.Run(() => _gitService.Push(path, remoteName, branchName));
+            
+            Toast.Show("Sucesso", $"Push realizado para {remoteName}", false);
+        }
+        catch (InvalidOperationException ex)
+        {
+            ErrorLog = ex.ToString();
+            ShowErrorDetails = true;
+            Toast.Show("Erro ao fazer push", ex.Message, true, ex.ToString());
+        }
+        finally
+        {
+            IsPushing = false;
+        }
+    }
+
+    private async Task ExecuteAddRemoteAsync()
+    {
+        var addRemoteWindow = new AddRemoteWindow();
+        var result = await addRemoteWindow.ShowDialog<dynamic>(GetMainWindow());
+        
+        if (result != null)
+        {
+            try
+            {
+                await Task.Run(() => _gitService.AddRemote(RepositoryPath, result.Name, result.Url));
+                await RefreshBranchAndRemoteAsync();
+                Toast.Show("Sucesso", $"Remote '{result.Name}' adicionado com sucesso.", false);
+            }
+            catch (InvalidOperationException ex)
+            {
+                Toast.Show("Erro ao adicionar remote", ex.Message, true, ex.ToString());
+            }
+        }
+    }
+
+    private Avalonia.Controls.Window? GetMainWindow()
+    {
+        if (Avalonia.Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+        {
+            return desktop.MainWindow;
+        }
+        return null;
+    }
+
+    private async Task RefreshBranchAndRemoteAsync()
+    {
+        var path = RepositoryPath;
+        if (string.IsNullOrWhiteSpace(path))
+            return;
+
+        try
+        {
+            var branches = await Task.Run(() => _gitService.GetBranches(path).ToList());
+            var remotes = await Task.Run(() => _gitService.GetRemotes(path).ToList());
+            
+            Dispatcher.UIThread.Post(() =>
+            {
+                Branches.Clear();
+                foreach (var branch in branches.Where(b => !b.IsRemote))
+                {
+                    Branches.Add(branch);
+                    if (branch.IsCurrentBranch)
+                        CurrentBranch = branch.FriendlyName;
+                }
+
+                Remotes.Clear();
+                foreach (var remote in remotes)
+                {
+                    Remotes.Add(remote);
+                }
+
+                if (!string.IsNullOrWhiteSpace(SelectedRemote) && Remotes.Any(r => r.Name == SelectedRemote))
+                {
+                    SelectedRemote = Remotes.First(r => r.Name == SelectedRemote).Name;
+                }
+                else if (Remotes.Any())
+                {
+                    SelectedRemote = Remotes.First().Name;
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Erro RefreshBranchAndRemote] {ex.Message}");
         }
     }
 

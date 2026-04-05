@@ -68,4 +68,12 @@ public partial class MainWindow : Window
         };
         await aboutWindow.ShowDialog(this);
     }
+
+    private void CloseErrorPanel(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is MainWindowViewModel vm)
+        {
+            vm.ShowErrorDetails = false;
+        }
+    }
 }
